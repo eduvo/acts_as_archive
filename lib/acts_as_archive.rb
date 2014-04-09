@@ -22,11 +22,8 @@ class ActsAsArchive
     end
 
     def disable(&block)
-      @mutex ||= Mutex.new
-      @mutex.synchronize do
-        self.disabled = true
-        block.call
-      end
+      self.disabled = true
+      block.call
     ensure
       self.disabled = false
     end
@@ -225,15 +222,12 @@ class ActsAsArchive
       if Rails.version[0..2] >= '3.2'
         def delete_with_archive(arel, name = nil, binds = [])
           sql = to_sql(arel, binds)
-          @mutex ||= Mutex.new
-          @mutex.synchronize do
-            unless ActsAsArchive.disabled
-              from, where = /DELETE FROM (.+)/i.match(sql)[1].split(/\s+WHERE\s+/i, 2)
-              from = from.strip.gsub(/[`"]/, '').split(/\s*,\s*/)
+          unless ActsAsArchive.disabled
+            from, where = /DELETE FROM (.+)/i.match(sql)[1].split(/\s+WHERE\s+/i, 2)
+            from = from.strip.gsub(/[`"]/, '').split(/\s*,\s*/)
 
-              ActsAsArchive.find(from).each do |config|
-                ActsAsArchive.move(config, where)
-              end
+            ActsAsArchive.find(from).each do |config|
+              ActsAsArchive.move(config, where)
             end
           end
 
@@ -242,15 +236,12 @@ class ActsAsArchive
       end
 
       def delete_sql_with_archive(sql, name = nil)
-        @mutex ||= Mutex.new
-        @mutex.synchronize do
-          unless ActsAsArchive.disabled
-            from, where = /DELETE FROM (.+)/i.match(sql)[1].split(/\s+WHERE\s+/i, 2)
-            from = from.strip.gsub(/[`"]/, '').split(/\s*,\s*/)
+        unless ActsAsArchive.disabled
+          from, where = /DELETE FROM (.+)/i.match(sql)[1].split(/\s+WHERE\s+/i, 2)
+          from = from.strip.gsub(/[`"]/, '').split(/\s*,\s*/)
 
-            ActsAsArchive.find(from).each do |config|
-              ActsAsArchive.move(config, where)
-            end
+          ActsAsArchive.find(from).each do |config|
+            ActsAsArchive.move(config, where)
           end
         end
 
