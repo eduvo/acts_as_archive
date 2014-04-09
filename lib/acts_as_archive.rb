@@ -133,6 +133,8 @@ class ActsAsArchive
             klass.send :set_table_name, options[:table]
           end
 
+          klass.primary_key = options[:primary_key] || 'id'
+
           klass.record_timestamps = options[:timestamps].inspect
           klass.acts_as_archive(:class => self, :archive => true)
 
